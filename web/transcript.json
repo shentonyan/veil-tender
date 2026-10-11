@@ -53,7 +53,7 @@
       "actor": "ReliableRoute",
       "public": [
         "BidPlaced event from 0x7099…79C8",
-        "Encrypted input handle 0x3b0f3af9b1e3aac5… (opaque)",
+        "Encrypted input handle 0x9451dc584e5ebba0… (opaque)",
         "Bond of 0.01 ETH locked"
       ],
       "private": [
@@ -66,7 +66,7 @@
       "actor": "FreshStart",
       "public": [
         "BidPlaced event from 0x3C44…93BC",
-        "Encrypted input handle 0x343f7d78bb6acd06… (opaque)",
+        "Encrypted input handle 0xf82ccfe46ba31282… (opaque)",
         "Bond of 0.01 ETH locked"
       ],
       "private": [
@@ -79,7 +79,7 @@
       "actor": "SteadyHaul",
       "public": [
         "BidPlaced event from 0x90F7…b906",
-        "Encrypted input handle 0xb7f2f10903311995… (opaque)",
+        "Encrypted input handle 0x15c26b9bff765ffa… (opaque)",
         "Bond of 0.01 ETH locked"
       ],
       "private": [
@@ -92,7 +92,7 @@
       "actor": "OverReach",
       "public": [
         "BidPlaced event from 0x15d3…6A65",
-        "Encrypted input handle 0xab71f59771811ffd… (opaque)",
+        "Encrypted input handle 0xd35e991c5dd08ae8… (opaque)",
         "Bond of 0.01 ETH locked"
       ],
       "private": [
@@ -104,7 +104,7 @@
       "title": "Observer tries to read the running lowest score",
       "actor": "Observer",
       "public": [
-        "Running lowest score is the opaque handle 0xc19d9689ac48053e…",
+        "Running lowest score is the opaque handle 0x4f9457814ba7dadb…",
         "Public decryption request: not decryptable"
       ]
     },

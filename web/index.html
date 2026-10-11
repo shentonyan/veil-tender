@@ -3,98 +3,162 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VeilTender replay</title>
-<style>
-  :root {
-    --bg: #fafaf7; --surface: #ffffff; --ink: #1b1b18; --muted: #6a6a63; --line: #e4e3dc;
-    --accent: #1f5f4a; --accent-soft: #e5f1ec; --private: #8a4b08; --private-soft: #fbf0e0;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #141413; --surface: #1d1d1b; --ink: #ecebe5; --muted: #9a9990; --line: #2e2e2a;
-      --accent: #6fcfae; --accent-soft: #1b2b25; --private: #e6b270; --private-soft: #2c2318;
-    }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-         font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
-  h1 { font-size: 1.9rem; margin: 0 0 4px; letter-spacing: -0.01em; }
-  h2 { font-size: 1.1rem; margin: 36px 0 12px; }
-  .lede { color: var(--muted); margin: 0 0 20px; }
-  .banner { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 14px;
-            font-size: .9rem; color: var(--muted); margin-bottom: 24px; }
-  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line);
-          border-radius: 10px; overflow: hidden; font-size: .95rem; }
-  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
-  th { font-weight: 600; color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
-  tr:last-child td { border-bottom: 0; }
-  .priv-col { display: none; color: var(--private); }
-  body.show-private .priv-col { display: table-cell; }
-  .toggle { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; font-size: .95rem; }
-  .toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
-  ol.timeline { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
-  ol.timeline > li { position: relative; margin: 0 0 18px 18px; padding: 14px 16px; background: var(--surface);
-                     border: 1px solid var(--line); border-radius: 10px; }
-  ol.timeline > li::before { content: ""; position: absolute; left: -26px; top: 20px; width: 10px; height: 10px;
-                             border-radius: 50%; background: var(--accent); }
-  .step-title { font-weight: 600; }
-  .actor { font-size: .8rem; color: var(--muted); margin-left: 8px; font-weight: 400; }
-  .lane { margin-top: 8px; padding: 8px 12px; border-radius: 8px; font-size: .93rem; }
-  .lane h3 { margin: 0 0 4px; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
-  .lane ul { margin: 0; padding-left: 18px; }
-  .lane.pub { background: var(--accent-soft); } .lane.pub h3 { color: var(--accent); }
-  .lane.priv { background: var(--private-soft); display: none; } .lane.priv h3 { color: var(--private); }
-  body.show-private .lane.priv { display: block; }
-  code { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
-  .result { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-  .foot { margin-top: 40px; color: var(--muted); font-size: .85rem; }
-</style>
+<title>VeilTender: sealed bids for AI agents</title>
+<meta name="description" content="A confidential sealed-bid task auction for AI agents, computed on encrypted bids with FHE.">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main>
-  <h1>VeilTender replay</h1>
-  <p class="lede">A confidential sealed-bid auction between AI agents. Step through one real run and see what the chain
-    shows versus what only each party knows.</p>
-  <div class="banner" id="banner"></div>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <filter id="wc" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="3" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="34" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation="1.1"/>
+  </filter>
+</svg>
+<div id="canvas-wrap" aria-hidden="true"><div id="canvas"></div></div>
 
-  <h2>The task</h2>
-  <div id="task"></div>
-  <table id="agents"></table>
-  <label class="toggle"><input type="checkbox" id="priv"> Show the private view (each agent's true cost, balances only their owner can decrypt)</label>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <a class="mark" href="#top">VeilTender</a>
+  <nav aria-label="Sections">
+    <a href="#flow" data-i18n="nav.flow">Flow</a>
+    <a href="#try" data-i18n="nav.try">Try it</a>
+    <a href="#run" data-i18n="nav.run">Real run</a>
+    <a href="#limits" data-i18n="nav.limits">Limits</a>
+    <a href="https://github.com/shentonyan/veil-tender" data-i18n="nav.github">GitHub</a>
+  </nav>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="zh" aria-pressed="false">中文</button>
+  </div>
+</header>
 
-  <h2>What happened</h2>
-  <ol class="timeline" id="timeline"></ol>
+<main id="main">
+  <section id="top" class="hero" data-tone="0">
+    <div class="hero-copy">
+      <h1 data-i18n="hero.title">Bids stay sealed. Only the price comes out.</h1>
+      <p class="lede" data-i18n="hero.lede">AI agents bid for a task with encrypted prices. The contract picks the winner without reading a single bid, then reveals who won and what they are paid.</p>
+      <p class="actions">
+        <a class="btn primary" href="#try" data-i18n="hero.try">Try your own auction</a>
+        <a class="btn ghost" href="https://github.com/shentonyan/veil-tender" data-i18n="hero.code">Read the code</a>
+      </p>
+    </div>
+    <div class="card board" style="--tint: var(--indigo)">
+      <p class="board-hint" id="board-hint" data-i18n="board.hint">Four agents have bid. Their prices are sealed.</p>
+      <div class="envs" id="envs"></div>
+      <p class="stamp" id="stamp" hidden></p>
+      <p class="board-result" id="board-result" aria-live="polite"></p>
+      <div class="board-actions">
+        <button type="button" class="btn primary" id="board-btn" data-i18n="board.close">Close the bidding</button>
+        <span class="board-note" data-i18n="board.public">Participants are public. Prices are not.</span>
+      </div>
+    </div>
+  </section>
 
-  <h2>Result</h2>
-  <div class="result" id="result"></div>
+  <section id="why" class="band" data-tone="1">
+    <div class="card wide" style="--tint: var(--teal)">
+      <h2 data-i18n="why.title">Why seal the bids?</h2>
+      <div class="three">
+        <div><h3 data-i18n="why.1.h"></h3><p data-i18n="why.1.p"></p></div>
+        <div><h3 data-i18n="why.2.h"></h3><p data-i18n="why.2.p"></p></div>
+        <div><h3 data-i18n="why.3.h"></h3><p data-i18n="why.3.p"></p></div>
+      </div>
+      <p class="note" data-i18n="why.note"></p>
+    </div>
+  </section>
 
-  <p class="foot">This page is a static replay generated by <code>npm run demo</code> from a local FHEVM mock run.
-    It is not a live dApp. Source and tests are in the repository.</p>
+  <section id="flow" class="band" data-tone="2">
+    <h2 class="band-title" data-i18n="flow.title">From task to payout</h2>
+    <div class="flow">
+      <ol class="steps" id="steps"></ol>
+      <div class="card step-panel" id="step-panel" style="--tint: var(--rose)" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section id="try" class="band" data-tone="3">
+    <div class="card wide" style="--tint: var(--ochre)">
+      <h2 data-i18n="try.title">Try an auction</h2>
+      <p class="lede small" data-i18n="try.lede"></p>
+      <div class="budget-row">
+        <label for="budget" data-i18n="try.budget">Budget</label>
+        <input id="budget" type="number" min="1" step="1" value="1000" inputmode="numeric">
+      </div>
+      <div class="table-wrap">
+        <table class="agents">
+          <thead><tr>
+            <th data-i18n="try.agent">Agent</th>
+            <th data-i18n="try.cost">True cost</th>
+            <th data-i18n="try.handicap">Handicap</th>
+            <th data-i18n="try.strategy">Strategy</th>
+            <th data-i18n="try.col.bid">Bid</th>
+            <th data-i18n="try.col.score">Score</th>
+            <th data-i18n="try.col.result">Result</th>
+          </tr></thead>
+          <tbody id="agent-rows"></tbody>
+        </table>
+      </div>
+      <p class="summary" id="summary" aria-live="polite"></p>
+      <div class="two">
+        <div class="lane lane-pub">
+          <h3 data-i18n="try.observer">What the chain shows</h3>
+          <ul class="handles" id="handles"></ul>
+          <p class="fine" data-i18n="try.observer.note"></p>
+          <h3 data-i18n="try.revealed">Revealed at the deadline</h3>
+          <p id="revealed"></p>
+        </div>
+        <div class="chart-box">
+          <div class="chart-head">
+            <h3 id="chart-title"></h3>
+            <select id="chart-agent" aria-label="Agent for the chart"></select>
+          </div>
+          <svg id="chart" viewBox="0 0 640 280" role="img" aria-labelledby="chart-title chart-caption"></svg>
+          <p class="fine" id="chart-caption"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="run" class="band" data-tone="4">
+    <div class="card wide" style="--tint: var(--moss)">
+      <h2 data-i18n="run.title">A run of the contract</h2>
+      <p class="lede small" data-i18n="run.lede"></p>
+      <label class="toggle"><input type="checkbox" id="priv"> <span data-i18n="run.toggle">Show what only each party knows</span></label>
+      <ol class="timeline" id="timeline"></ol>
+    </div>
+  </section>
+
+  <section id="limits" class="band" data-tone="5">
+    <div class="card wide" style="--tint: var(--indigo)">
+      <h2 data-i18n="limits.title">What it promises, and what it does not</h2>
+      <div class="two">
+        <div>
+          <h3 data-i18n="limits.yes">Promises</h3>
+          <ul class="plain">
+            <li data-i18n="limits.yes.1"></li><li data-i18n="limits.yes.2"></li>
+            <li data-i18n="limits.yes.3"></li><li data-i18n="limits.yes.4"></li>
+          </ul>
+        </div>
+        <div>
+          <h3 data-i18n="limits.no">Does not promise</h3>
+          <ul class="plain">
+            <li data-i18n="limits.no.1"></li><li data-i18n="limits.no.2"></li>
+            <li data-i18n="limits.no.3"></li><li data-i18n="limits.no.4"></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
-<script>
-const T = {"network":"hardhat","note":"Replay of a local FHEVM-mock run. Generated by demo/run-demo.ts","budget":"1000","agents":[{"name":"ReliableRoute","address":"0x7099…79C8","handicap":"0","cost":"420","note":"high-reputation agent"},{"name":"FreshStart","address":"0x3C44…93BC","handicap":"150","cost":"300","note":"new agent, no track record: handicap 150"},{"name":"SteadyHaul","address":"0x90F7…b906","handicap":"0","cost":"510","note":"high-reputation agent"},{"name":"OverReach","address":"0x15d3…6A65","handicap":"0","cost":"1500","note":"cost above the budget"}],"result":{"winner":"ReliableRoute","price":"450","secondScore":"450"},"steps":[{"title":"Task posted and escrow funded","actor":"Poster","public":["Tender #1: public budget 1000 cDUSD, bidding closes at a fixed time","Escrow moved into the contract through the confidential token: the transfer amount is encrypted on the token ledger","Only one boolean was revealed: \"escrow holds the full budget\" = true","Handicaps are public: 0x7099…79C8=0, 0x3C44…93BC=150, 0x90F7…b906=0, 0x15d3…6A65=0"]},{"title":"ReliableRoute bids","actor":"ReliableRoute","public":["BidPlaced event from 0x7099…79C8","Encrypted input handle 0x3b0f3af9b1e3aac5… (opaque)","Bond of 0.01 ETH locked"],"private":["True cost 420 cDUSD, bids exactly that (truthful bidding is the dominant strategy)","high-reputation agent"]},{"title":"FreshStart bids","actor":"FreshStart","public":["BidPlaced event from 0x3C44…93BC","Encrypted input handle 0x343f7d78bb6acd06… (opaque)","Bond of 0.01 ETH locked"],"private":["True cost 300 cDUSD, bids exactly that (truthful bidding is the dominant strategy)","new agent, no track record: handicap 150"]},{"title":"SteadyHaul bids","actor":"SteadyHaul","public":["BidPlaced event from 0x90F7…b906","Encrypted input handle 0xb7f2f10903311995… (opaque)","Bond of 0.01 ETH locked"],"private":["True cost 510 cDUSD, bids exactly that (truthful bidding is the dominant strategy)","high-reputation agent"]},{"title":"OverReach bids","actor":"OverReach","public":["BidPlaced event from 0x15d3…6A65","Encrypted input handle 0xab71f59771811ffd… (opaque)","Bond of 0.01 ETH locked"],"private":["True cost 1500 cDUSD, bids exactly that (truthful bidding is the dominant strategy)","cost above the budget"]},{"title":"Observer tries to read the running lowest score","actor":"Observer","public":["Running lowest score is the opaque handle 0xc19d9689ac48053e…","Public decryption request: not decryptable"]},{"title":"Deadline: only two values are decrypted","actor":"Anyone","public":["Revealed winner index 0 → 0x7099…79C8","Revealed second-lowest score 450; clearing price = second score − winner handicap = 450 cDUSD","Verified on-chain against the KMS signatures (FHE.checkSignatures). Nobody can forge a winner or price","No individual bid, and no losing bidder's price, was ever decrypted"]},{"title":"Delivery approved, escrow settled","actor":"Poster","public":["Settled event; token balances and transfer amounts stay encrypted on the token ledger"],"private":["Winner decrypts own balance: 450 cDUSD","Poster decrypts own balance: 550 cDUSD (refund of budget − price)"]}]};
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-if (!T) {
-  document.querySelector("main").innerHTML = "<h1>No transcript</h1><p>Run <code>npm run demo</code> to generate this page.</p>";
-} else {
-  $("banner").textContent = T.note + " (network: " + T.network + ")";
-  $("task").innerHTML = "<p>Buy one task. Public budget <strong>" + esc(T.budget) + " cDUSD</strong>. Lowest <em>score</em> wins, where score = bid + a public handicap derived from reputation. The winner is paid the price at which it would have stopped winning.</p>";
-  $("agents").innerHTML =
-    "<tr><th>Agent</th><th>Address</th><th>Public handicap</th><th class='priv-col'>Private cost</th></tr>" +
-    T.agents.map((a) => "<tr><td>" + esc(a.name) + "</td><td><code>" + esc(a.address) + "</code></td><td>" + esc(a.handicap) +
-      "</td><td class='priv-col'>" + esc(a.cost) + "</td></tr>").join("");
-  $("timeline").innerHTML = T.steps.map((s) => {
-    const pub = "<div class='lane pub'><h3>On-chain, visible to everyone</h3><ul>" + s.public.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul></div>";
-    const priv = s.private ? "<div class='lane priv'><h3>Known only to " + esc(s.actor) + "</h3><ul>" + s.private.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul></div>" : "";
-    return "<li><div class='step-title'>" + esc(s.title) + "<span class='actor'>" + esc(s.actor) + "</span></div>" + pub + priv + "</li>";
-  }).join("");
-  $("result").innerHTML = "<strong>" + esc(T.result.winner) + "</strong> wins at <strong>" + esc(T.result.price) +
-    " cDUSD</strong> (second-lowest score " + esc(T.result.secondScore) + "). Only the winner index and that one score were ever decrypted.";
-  $("priv").addEventListener("change", (e) => document.body.classList.toggle("show-private", e.target.checked));
-}
-</script>
+<footer class="foot">
+  <a href="https://github.com/shentonyan/veil-tender" data-i18n="foot.src">Source on GitHub</a>
+  <span data-i18n="foot.license">BSD-3-Clause-Clear</span>
+  <span data-i18n="foot.built">Built for the ETH Shenzhen 2026 Hackathon.</span>
+</footer>
+
+<script src="mechanism.js"></script>
+<script src="i18n.js"></script>
+<script src="transcript.js" onerror="void 0"></script>
+<script src="app.js"></script>
 </body>
 </html>

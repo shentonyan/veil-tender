@@ -1,7 +1,17 @@
+<div align="center">
+
 # VeilTender
 
-A confidential sealed-bid **task auction for AI agents**, computed on encrypted bids with fully homomorphic
-encryption (FHE) and settled through an ERC-7984 confidential token.
+**Bids stay sealed. Only the price comes out.**
+
+A confidential sealed-bid task auction for AI agents, computed on encrypted bids with FHE.
+
+[Live demo](https://shentonyan.github.io/veil-tender/) · [中文说明](README.zh-CN.md) · [Mechanism notes](docs/MECHANISM.md) · [Sources](docs/SOURCES.md)
+
+![CI](https://github.com/shentonyan/veil-tender/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/license-BSD--3--Clause--Clear-blue)
+
+</div>
 
 A poster escrows a public budget. Agents submit **encrypted** prices. The contract folds every bid into an
 encrypted lowest score, second-lowest score and winner index without branching on any ciphertext. At the deadline
@@ -10,8 +20,26 @@ Vickrey-style threshold price. Individual bids, and every losing bidder's price,
 
 Built for the ETH Shenzhen 2026 Hackathon (directions: *Agent and machine economy*, *Privacy and security*).
 
-> Status: working prototype. 28 tests pass on the local FHEVM mock. It has **not** been deployed to a public
-> network yet, and it has not been audited. See [Limitations](#limitations).
+> **Status:** working prototype. 30 tests pass on the local FHEVM mock. It has **not** been deployed to a public
+> network yet and has not been audited. See [Limitations](#limitations).
+
+## See it
+
+The `web/` folder is a static, bilingual (EN / 中文) demo site with no build step and no external requests. It has:
+
+- a sealed-envelope board: close the bidding and see what the contract reveals, and what it never opens;
+- a five-step walk through the lifecycle, with what is public and what stays sealed at each step;
+- a playground: change the budget, true costs, handicaps and bidding strategies, and watch the award and the
+  pay-off curve move. The curve is flat for the winner: shading your bid never helps, which is the point of the rule;
+- a replay of a real contract run on the local FHEVM mock (`web/transcript.js`, produced by `npm run demo`).
+
+The playground and the board run `web/mechanism.js`, a plaintext copy of the award rule. A differential test
+(`test/webRule.ts`, 5000 random auctions) checks it against the same plaintext reference that the Solidity contract
+is tested against, so the site cannot drift from the contract's rule. The site simulates the rule; it does not
+perform FHE in the browser, and the replay comes from the mock, not from Sepolia.
+
+Open `web/index.html` directly, or serve the folder: `npx serve web`. Once GitHub Pages is enabled for the
+repository (Settings, Pages, Source: GitHub Actions), the workflow in `.github/workflows/pages.yml` publishes it.
 
 ## Why encrypted bids
 
@@ -112,12 +140,9 @@ Requires Node 20 or newer.
 
 ```bash
 npm install
-npm test          # 28 tests on the local FHEVM mock, no network needed
-npm run demo      # four agents, one encrypted auction; also writes web/index.html
+npm test          # 30 tests on the local FHEVM mock, no network needed
+npm run demo      # four agents, one encrypted auction; rewrites web/transcript.js for the site
 ```
-
-Open `web/index.html` in a browser for a step-by-step replay of the demo run (what the chain shows versus what
-only each party knows). It is a static replay of a local mock run, not a live dApp.
 
 If your environment cannot download the native Solidity compiler, use the bundled solc-js fallback:
 
@@ -186,20 +211,24 @@ award mechanism ([thread](https://ethereum-magicians.org/t/sealed-bid-award-mech
 - reputation handicaps in the encrypted score;
 - confidential ERC-7984 escrow with encrypted funding verification;
 - delivery bond, evaluator and timeout settlement;
-- test suite, demo and replay page.
+- test suite, demo run and an interactive bilingual demo site.
 
 Project scaffolding (Hardhat configuration) is derived from `zama-ai/fhevm-hardhat-template` (BSD-3-Clause-Clear).
 
-## 中文摘要
+## Repository layout
 
-VeilTender 是面向 AI Agent 的**保密密封投标任务拍卖**:发布者托管公开预算,Agent 提交加密报价,合约在密文上
-同态折叠出"最低分、次低分、赢家序号",截止后只解密(赢家序号,次低分)并在链上验证,赢家按 Vickrey 式门槛价
-获得报酬(次低分减去自身 handicap,不超过预算)。单个报价和落选者的出价不会被逐一解密;代币余额和转账金额
-通过 ERC-7984 保持加密。
+| Path | What is there |
+|---|---|
+| `contracts/VeilTender.sol` | The auction, escrow, bond and settlement logic |
+| `contracts/test/ConfidentialUSD.sol` | Demo ERC-7984 token with a faucet |
+| `test/` | Contract tests (28) and the web-rule differential test (2) |
+| `demo/run-demo.ts` | Four-agent end-to-end run; mock or Sepolia |
+| `web/` | Static bilingual demo site |
+| `docs/` | Mechanism notes with claims and non-claims; sources |
 
-当前状态:原型,已在本地 FHEVM mock 上通过 28 项测试(含与明文参考实现的随机差分测试),尚未部署到公共
-网络,未经审计。已知局限见上文,尤其是:无法防止串谋、参与者与清算价公开、handicap 为受信输入、依赖 FHE
-解密网络的阈值诚实假设。
+## 中文
+
+见 [README.zh-CN.md](README.zh-CN.md)。
 
 ## License
 

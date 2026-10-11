@@ -4,8 +4,8 @@
  *   npm run demo                                         # local FHEVM mock (fast, no network)
  *   npx hardhat test demo/run-demo.ts --network sepolia  # real FHE on Sepolia (needs funded account + RPC)
  *
- * On the mock network the run is also written to web/transcript.json and web/index.html
- * (a replay page you can open in a browser). Nothing is written for other networks.
+ * On the mock network the run is also written to web/transcript.json and web/transcript.js
+ * (the demo site in web/ replays it). Nothing is written for other networks.
  */
 import { FhevmType } from "@fhevm/hardhat-plugin";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
@@ -197,15 +197,10 @@ async function main() {
     const webDir = path.join(__dirname, "..", "web");
     fs.mkdirSync(webDir, { recursive: true });
     fs.writeFileSync(path.join(webDir, "transcript.json"), JSON.stringify(out, null, 2) + "\n");
-    const tpl = path.join(webDir, "index.template.html");
-    console.log("\nWrote web/transcript.json");
-    if (fs.existsSync(tpl)) {
-      // "<" is escaped so no transcript string can close the inline <script> block
-      const json = JSON.stringify(out).replace(/</g, "\\u003c");
-      const html = fs.readFileSync(tpl, "utf8").replace("/*__TRANSCRIPT__*/null", () => json);
-      fs.writeFileSync(path.join(webDir, "index.html"), html);
-      console.log("Wrote web/index.html (open it in a browser)");
-    }
+    // "<" is escaped so no transcript string can close a <script> block
+    const json = JSON.stringify(out).replace(/</g, "\\u003c");
+    fs.writeFileSync(path.join(webDir, "transcript.js"), `window.VEIL_TRANSCRIPT = ${json};\n`);
+    console.log("\nWrote web/transcript.json and web/transcript.js (the demo site replays them)");
   }
 }
 
