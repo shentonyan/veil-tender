@@ -43,6 +43,16 @@ perform FHE in the browser, and the replay comes from the mock, not from Sepolia
 Open `web/index.html` directly, or serve the folder: `npx serve web`. Once GitHub Pages is enabled for the
 repository (Settings, Pages, Source: GitHub Actions), the workflow in `.github/workflows/pages.yml` publishes it.
 
+## Why this is worth building
+
+Second-price (Vickrey) auctions make truthful bidding a dominant strategy, yet they are famously rare in
+practice \u2014 Rothkopf, Teisberg and Kahn (1990) traced why: the auctioneer who sees the bids can cheat, and
+bidders fear revealing their costs. A public blockchain makes both problems worse, not better: every pending bid
+is readable, and commit\u2013reveal schemes stall whenever a loser declines to reveal. Computing the auction
+under FHE removes the auctioneer and the reveal phase at once. For machine-to-machine procurement \u2014 agents
+hiring agents, where posted prices leak margin and negotiation does not scale \u2014 that turns the textbook
+mechanism into something deployable.
+
 ## Why encrypted bids
 
 In a public procurement auction run on a public chain, three things go wrong:

@@ -44,10 +44,70 @@
     </figure>
   </section>
 
+  <section id="value" class="band">
+    <h2 data-i18n="value.title">Is this actually worth building?</h2>
+    <div class="why three">
+      <div><h3 data-i18n="value.1.h"></h3><p data-i18n="value.1.p"></p></div>
+      <div><h3 data-i18n="value.2.h"></h3><p data-i18n="value.2.p"></p></div>
+      <div><h3 data-i18n="value.3.h"></h3><p data-i18n="value.3.p"></p></div>
+    </div>
+    <p class="note" data-i18n="value.note"></p>
+  </section>
+
   <section id="demo" class="band">
     <h2 data-i18n="demo.title">One auction, end to end</h2>
     <p class="lede small" data-i18n="demo.lede"></p>
     <ol class="rail" id="demo-rail"></ol>
+    <div class="scene" id="demo-scene" data-step="s1" aria-hidden="true">
+      <div class="sc-row">
+        <div class="sc-card sc-poster">
+          <span class="sc-name" data-i18n="scene.poster">Poster</span>
+          <div class="sc-escrow"><span class="sc-escrow-fill"></span></div>
+          <span class="sc-sub" data-i18n="scene.escrow">Escrow 1000</span>
+          <span class="sc-pill sc-refund" data-i18n="scene.refund">refund 550</span>
+        </div>
+        <div class="sc-card sc-contract">
+          <span class="sc-name" data-i18n="scene.contract">Contract</span>
+          <div class="sc-slots">
+            <div class="sc-slot">
+              <span class="sc-slot-l" data-i18n="scene.slot.best">lowest score</span>
+              <span class="sc-slot-v"><span class="c">0x4f9457…</span></span>
+            </div>
+            <div class="sc-slot flip">
+              <span class="sc-slot-l" data-i18n="scene.slot.second">second score</span>
+              <span class="sc-slot-v"><span class="c">████████</span><span class="p">450</span></span>
+            </div>
+            <div class="sc-slot flip">
+              <span class="sc-slot-l" data-i18n="scene.slot.idx">winner index</span>
+              <span class="sc-slot-v"><span class="c">████████</span><span class="p">0</span></span>
+            </div>
+          </div>
+          <span class="sc-pill sc-pay" data-i18n="scene.pay">pay 450</span>
+        </div>
+      </div>
+      <div class="sc-agents">
+        <div class="sc-agent sc-a0">
+          <span class="sc-name">ReliableRoute</span>
+          <span class="sc-chip"><span class="c">0x9451dc58…</span><span class="p">450</span></span>
+          <span class="sc-tag" data-i18n="try.r.win">Wins</span>
+        </div>
+        <div class="sc-agent sc-a1">
+          <span class="sc-name">FreshStart <em class="sc-k">+150</em></span>
+          <span class="sc-chip"><span class="c">0xf82ccfe4…</span></span>
+          <span class="sc-tag" data-i18n="scene.upset">+150 handicap → score 450</span>
+        </div>
+        <div class="sc-agent sc-a2">
+          <span class="sc-name">SteadyHaul</span>
+          <span class="sc-chip"><span class="c">0x15c26b9b…</span></span>
+          <span class="sc-tag" data-i18n="try.r.lost">Lost</span>
+        </div>
+        <div class="sc-agent sc-a3">
+          <span class="sc-name">OverReach</span>
+          <span class="sc-chip"><span class="c">0xd35e991c…</span></span>
+          <span class="sc-tag" data-i18n="try.r.over">Over budget, ignored</span>
+        </div>
+      </div>
+    </div>
     <div class="stage">
       <div class="pane pane-pub">
         <h3 data-i18n="demo.pub">On-chain · everyone sees</h3>
@@ -146,6 +206,7 @@
 </main>
 
 <footer class="foot">
+  <span class="foot-mark">VeilTender</span>
   <a href="https://github.com/shentonyan/veil-tender" data-i18n="foot.src">Source on GitHub</a>
   <span data-i18n="foot.license">BSD-3-Clause-Clear</span>
   <span data-i18n="foot.built">Built for the ETH Shenzhen 2026 Hackathon.</span>

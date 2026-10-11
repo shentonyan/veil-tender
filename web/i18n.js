@@ -26,6 +26,19 @@
       "cipher.price.v": "never decrypted",
       "cipher.note": "From a real run of the contract on the local FHEVM mock.",
 
+      "value.title": "Is this actually worth building?",
+      "value.1.h": "Agents are starting to hire agents.",
+      "value.1.p":
+        "When software agents buy services from each other \u2014 compute, data, deliveries, work \u2014 something has to set the price. Posted prices leak margin; negotiation does not scale. The textbook answer is a sealed-bid auction.",
+      "value.2.h": "The honest auction is the one nobody deploys.",
+      "value.2.p":
+        "Second-price auctions make truthful bidding optimal \u2014 on paper. In practice they are rare, and economists have asked why since Vickrey (Rothkopf et al. 1990): an auctioneer who sees the bids can cheat, and on a public chain every bid is readable before the deadline. Commit\u2013reveal patches that, then breaks when a loser simply refuses to reveal.",
+      "value.3.h": "FHE removes the auctioneer.",
+      "value.3.p":
+        "Here the contract computes on encrypted bids. No auctioneer reads them, no rival can react to them, and nobody has to come back for a reveal phase. A mechanism that lived in textbooks becomes one you can deploy.",
+      "value.note":
+        "Concrete fits: task markets between AI agents (this demo), procurement where suppliers will not expose their cost structure, one-shot sealed-bid sales.",
+
       "demo.title": "One auction, end to end",
       "demo.lede":
         "Four agents, one task, a public budget of 1000. This replays a real run of the contract on the local FHEVM mock. Step through what the chain shows — and what it never will.",
@@ -95,6 +108,16 @@
       "demo.s6.sealed": [
         "The amounts — 450 to the winner, 550 back to the poster. Each party decrypts only its own balance.",
       ],
+
+      "scene.poster": "Poster",
+      "scene.contract": "Contract",
+      "scene.escrow": "Escrow 1000",
+      "scene.slot.best": "lowest score",
+      "scene.slot.second": "second score",
+      "scene.slot.idx": "winner index",
+      "scene.upset": "+150 handicap → score 450",
+      "scene.pay": "pay 450",
+      "scene.refund": "refund 550",
 
       "try.title": "Run your own",
       "try.lede":
@@ -198,6 +221,19 @@
       "cipher.price.v": "永不解密",
       "cipher.note": "来自合约在本地 FHEVM mock 上的一次真实运行。",
 
+      "value.title": "这东西真的有价值吗?",
+      "value.1.h": "Agent 正在开始雇佣 Agent。",
+      "value.1.p":
+        "当软件 Agent 互相购买服务——算力、数据、配送、劳务——总得有东西来定价。挂牌价暴露利润空间,逐一议价无法规模化。教科书给出的答案是密封投标拍卖。",
+      "value.2.h": "最诚实的拍卖,恰恰没人部署。",
+      "value.2.p":
+        "二价拍卖让如实报价成为最优策略——这只是纸面上的。现实中它极少被使用,经济学家从 Vickrey 开始就在问为什么(Rothkopf 等,1990):看得到报价的拍卖人可以作弊,而公链上每份报价在截止前人人可读。commit\u2013reveal 能补这个洞,但只要一个落选者拒绝揭示,拍卖就卡死。",
+      "value.3.h": "FHE 把拍卖人整个移除了。",
+      "value.3.p":
+        "在这里,合约直接在加密报价上计算。没有拍卖人读得到报价,没有对手能对报价做出反应,也不存在需要所有人回来配合的揭示阶段。一个只活在教科书里的机制,变成了可以部署的东西。",
+      "value.note":
+        "具体适用:AI Agent 之间的任务市场(本演示)、供应商不愿暴露成本结构的采购招标、一次性的密封投标出售。",
+
       "demo.title": "完整看一场拍卖",
       "demo.lede":
         "四个 Agent,一个任务,公开预算 1000。这里回放合约在本地 FHEVM mock 上的一次真实运行。一步步看链上公开什么——以及永远不会公开什么。",
@@ -254,6 +290,16 @@
         "两笔保密转账完成结算:赢家获得报酬,发布者拿回剩余预算,保证金退还。从不交付的赢家则会失去保证金。",
       ],
       "demo.s6.sealed": ["金额本身——450 给赢家,550 退回发布者。每一方只能解密自己的余额。"],
+
+      "scene.poster": "发布者",
+      "scene.contract": "合约",
+      "scene.escrow": "托管 1000",
+      "scene.slot.best": "最低分",
+      "scene.slot.second": "次低分",
+      "scene.slot.idx": "赢家序号",
+      "scene.upset": "handicap +150 → 得分 450",
+      "scene.pay": "支付 450",
+      "scene.refund": "退回 550",
 
       "try.title": "亲手跑一场",
       "try.lede":

@@ -92,6 +92,7 @@
     });
 
     var k = STEPS[demoStep];
+    if ($("demo-scene")) $("demo-scene").setAttribute("data-step", k);
     var pub = $("stage-pub");
     pub.textContent = "";
     t("demo." + k + ".pub").forEach(function (line) { pub.appendChild(h("li", { text: line })); });
