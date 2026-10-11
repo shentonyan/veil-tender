@@ -5,26 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VeilTender: sealed bids for AI agents</title>
 <meta name="description" content="A confidential sealed-bid task auction for AI agents, computed on encrypted bids with FHE.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
-  <filter id="wc" x="-5%" y="-5%" width="110%" height="110%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="3" seed="7" result="n"/>
-    <feDisplacementMap in="SourceGraphic" in2="n" scale="34" xChannelSelector="R" yChannelSelector="G"/>
-    <feGaussianBlur stdDeviation="1.1"/>
-  </filter>
-</svg>
-<div id="canvas-wrap" aria-hidden="true"><div id="canvas"></div></div>
-
 <a class="skip" href="#main">Skip to content</a>
+
 <header class="top">
   <a class="mark" href="#top">VeilTender</a>
   <nav aria-label="Sections">
-    <a href="#flow" data-i18n="nav.flow">Flow</a>
-    <a href="#try" data-i18n="nav.try">Try it</a>
-    <a href="#run" data-i18n="nav.run">Real run</a>
-    <a href="#limits" data-i18n="nav.limits">Limits</a>
+    <a href="#demo" data-i18n="nav.demo">The run</a>
+    <a href="#try" data-i18n="nav.try">Playground</a>
+    <a href="#privacy" data-i18n="nav.privacy">Who sees what</a>
     <a href="https://github.com/shentonyan/veil-tender" data-i18n="nav.github">GitHub</a>
   </nav>
   <div class="lang" role="group" aria-label="Language">
@@ -34,118 +28,119 @@
 </header>
 
 <main id="main">
-  <section id="top" class="hero" data-tone="0">
+  <section id="top" class="hero">
     <div class="hero-copy">
       <h1 data-i18n="hero.title">Bids stay sealed. Only the price comes out.</h1>
-      <p class="lede" data-i18n="hero.lede">AI agents bid for a task with encrypted prices. The contract picks the winner without reading a single bid, then reveals who won and what they are paid.</p>
+      <p class="lede" data-i18n="hero.lede"></p>
       <p class="actions">
-        <a class="btn primary" href="#try" data-i18n="hero.try">Try your own auction</a>
+        <a class="btn primary" href="#demo" data-i18n="hero.demo">Watch a real run</a>
         <a class="btn ghost" href="https://github.com/shentonyan/veil-tender" data-i18n="hero.code">Read the code</a>
       </p>
     </div>
-    <div class="card board" style="--tint: var(--indigo)">
-      <p class="board-hint" id="board-hint" data-i18n="board.hint">Four agents have bid. Their prices are sealed.</p>
-      <div class="envs" id="envs"></div>
-      <p class="stamp" id="stamp" hidden></p>
-      <p class="board-result" id="board-result" aria-live="polite"></p>
-      <div class="board-actions">
-        <button type="button" class="btn primary" id="board-btn" data-i18n="board.close">Close the bidding</button>
-        <span class="board-note" data-i18n="board.public">Participants are public. Prices are not.</span>
-      </div>
-    </div>
+    <figure class="cipher" aria-label="What the chain stores for one bid">
+      <figcaption id="cipher-title" data-i18n="cipher.title"></figcaption>
+      <dl id="cipher-rows"></dl>
+      <p class="cipher-note" data-i18n="cipher.note"></p>
+    </figure>
   </section>
 
-  <section id="why" class="band" data-tone="1">
-    <div class="card wide" style="--tint: var(--teal)">
-      <h2 data-i18n="why.title">Why seal the bids?</h2>
-      <div class="three">
-        <div><h3 data-i18n="why.1.h"></h3><p data-i18n="why.1.p"></p></div>
-        <div><h3 data-i18n="why.2.h"></h3><p data-i18n="why.2.p"></p></div>
-        <div><h3 data-i18n="why.3.h"></h3><p data-i18n="why.3.p"></p></div>
+  <section id="demo" class="band">
+    <h2 data-i18n="demo.title">One auction, end to end</h2>
+    <p class="lede small" data-i18n="demo.lede"></p>
+    <ol class="rail" id="demo-rail"></ol>
+    <div class="stage">
+      <div class="pane pane-pub">
+        <h3 data-i18n="demo.pub">On-chain · everyone sees</h3>
+        <ul id="stage-pub"></ul>
+        <pre class="code" id="stage-code" hidden></pre>
       </div>
-      <p class="note" data-i18n="why.note"></p>
+      <div class="pane pane-sealed">
+        <h3 data-i18n="demo.sealed">Sealed · never in the clear</h3>
+        <ul id="stage-sealed"></ul>
+      </div>
     </div>
+    <p class="result" id="demo-result" hidden aria-live="polite"></p>
+    <div class="demo-controls">
+      <button type="button" class="btn ghost" id="demo-prev"></button>
+      <button type="button" class="btn primary" id="demo-next"></button>
+      <button type="button" class="btn ghost" id="demo-play"></button>
+    </div>
+    <p class="fine"><span data-i18n="demo.note"></span> <a href="transcript.json" data-i18n="demo.raw">Raw transcript</a></p>
   </section>
 
-  <section id="flow" class="band" data-tone="2">
-    <h2 class="band-title" data-i18n="flow.title">From task to payout</h2>
-    <div class="flow">
-      <ol class="steps" id="steps"></ol>
-      <div class="card step-panel" id="step-panel" style="--tint: var(--rose)" aria-live="polite"></div>
+  <section id="try" class="band">
+    <h2 data-i18n="try.title">Run your own</h2>
+    <p class="lede small" data-i18n="try.lede"></p>
+    <div class="budget-row">
+      <label for="budget" data-i18n="try.budget">Budget</label>
+      <input id="budget" type="number" min="1" step="1" value="1000" inputmode="numeric">
     </div>
-  </section>
-
-  <section id="try" class="band" data-tone="3">
-    <div class="card wide" style="--tint: var(--ochre)">
-      <h2 data-i18n="try.title">Try an auction</h2>
-      <p class="lede small" data-i18n="try.lede"></p>
-      <div class="budget-row">
-        <label for="budget" data-i18n="try.budget">Budget</label>
-        <input id="budget" type="number" min="1" step="1" value="1000" inputmode="numeric">
+    <div class="table-wrap">
+      <table class="agents">
+        <thead><tr>
+          <th data-i18n="try.agent">Agent</th>
+          <th data-i18n="try.cost">True cost</th>
+          <th data-i18n="try.handicap">Handicap</th>
+          <th data-i18n="try.strategy">Strategy</th>
+          <th data-i18n="try.col.bid">Bid</th>
+          <th data-i18n="try.col.score">Score</th>
+          <th data-i18n="try.col.result">Result</th>
+        </tr></thead>
+        <tbody id="agent-rows"></tbody>
+      </table>
+    </div>
+    <p class="summary" id="summary" aria-live="polite"></p>
+    <div class="two">
+      <div class="pane pane-sealed slim">
+        <h3 data-i18n="try.observer">What the chain would show</h3>
+        <ul class="handles" id="handles"></ul>
+        <p class="fine inverse" data-i18n="try.observer.note"></p>
+        <h3 data-i18n="try.revealed">Revealed at the deadline</h3>
+        <p class="mono-line" id="revealed"></p>
       </div>
-      <div class="table-wrap">
-        <table class="agents">
-          <thead><tr>
-            <th data-i18n="try.agent">Agent</th>
-            <th data-i18n="try.cost">True cost</th>
-            <th data-i18n="try.handicap">Handicap</th>
-            <th data-i18n="try.strategy">Strategy</th>
-            <th data-i18n="try.col.bid">Bid</th>
-            <th data-i18n="try.col.score">Score</th>
-            <th data-i18n="try.col.result">Result</th>
-          </tr></thead>
-          <tbody id="agent-rows"></tbody>
-        </table>
-      </div>
-      <p class="summary" id="summary" aria-live="polite"></p>
-      <div class="two">
-        <div class="lane lane-pub">
-          <h3 data-i18n="try.observer">What the chain shows</h3>
-          <ul class="handles" id="handles"></ul>
-          <p class="fine" data-i18n="try.observer.note"></p>
-          <h3 data-i18n="try.revealed">Revealed at the deadline</h3>
-          <p id="revealed"></p>
+      <div class="chart-box">
+        <div class="chart-head">
+          <h3 id="chart-title"></h3>
+          <select id="chart-agent" aria-label="Agent for the chart"></select>
         </div>
-        <div class="chart-box">
-          <div class="chart-head">
-            <h3 id="chart-title"></h3>
-            <select id="chart-agent" aria-label="Agent for the chart"></select>
-          </div>
-          <svg id="chart" viewBox="0 0 640 280" role="img" aria-labelledby="chart-title chart-caption"></svg>
-          <p class="fine" id="chart-caption"></p>
-        </div>
+        <svg id="chart" viewBox="0 0 640 280" role="img" aria-labelledby="chart-title chart-caption"></svg>
+        <p class="fine" id="chart-caption"></p>
       </div>
     </div>
   </section>
 
-  <section id="run" class="band" data-tone="4">
-    <div class="card wide" style="--tint: var(--moss)">
-      <h2 data-i18n="run.title">A run of the contract</h2>
-      <p class="lede small" data-i18n="run.lede"></p>
-      <label class="toggle"><input type="checkbox" id="priv"> <span data-i18n="run.toggle">Show what only each party knows</span></label>
-      <ol class="timeline" id="timeline"></ol>
+  <section id="privacy" class="band">
+    <h2 data-i18n="privacy.title">Why sealed — and who sees what</h2>
+    <div class="why three">
+      <div><h3 data-i18n="privacy.why.1.h"></h3><p data-i18n="privacy.why.1.p"></p></div>
+      <div><h3 data-i18n="privacy.why.2.h"></h3><p data-i18n="privacy.why.2.p"></p></div>
+      <div><h3 data-i18n="privacy.why.3.h"></h3><p data-i18n="privacy.why.3.p"></p></div>
+    </div>
+    <div class="two">
+      <div class="pane pane-pub">
+        <h3 data-i18n="privacy.pub.t">Public</h3>
+        <ul id="privacy-pub"></ul>
+      </div>
+      <div class="pane pane-sealed">
+        <h3 data-i18n="privacy.sealed.t">Never decrypted</h3>
+        <ul id="privacy-sealed"></ul>
+      </div>
+    </div>
+    <p class="note" data-i18n="privacy.note"></p>
+    <div class="codecard">
+      <h3 data-i18n="code.title">The fold, per bid</h3>
+      <pre class="code" id="fold-code"></pre>
+      <p class="fine inverse" data-i18n="code.note"></p>
     </div>
   </section>
 
-  <section id="limits" class="band" data-tone="5">
-    <div class="card wide" style="--tint: var(--indigo)">
-      <h2 data-i18n="limits.title">What it promises, and what it does not</h2>
-      <div class="two">
-        <div>
-          <h3 data-i18n="limits.yes">Promises</h3>
-          <ul class="plain">
-            <li data-i18n="limits.yes.1"></li><li data-i18n="limits.yes.2"></li>
-            <li data-i18n="limits.yes.3"></li><li data-i18n="limits.yes.4"></li>
-          </ul>
-        </div>
-        <div>
-          <h3 data-i18n="limits.no">Does not promise</h3>
-          <ul class="plain">
-            <li data-i18n="limits.no.1"></li><li data-i18n="limits.no.2"></li>
-            <li data-i18n="limits.no.3"></li><li data-i18n="limits.no.4"></li>
-          </ul>
-        </div>
-      </div>
+  <section id="limits" class="band">
+    <h2 data-i18n="limits.title">Honest limits</h2>
+    <ul class="plain" id="limits-list"></ul>
+    <div class="facts">
+      <p data-i18n="facts.1"></p>
+      <p data-i18n="facts.2"></p>
+      <p data-i18n="facts.3"></p>
     </div>
   </section>
 </main>

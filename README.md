@@ -25,13 +25,15 @@ Built for the ETH Shenzhen 2026 Hackathon (directions: *Agent and machine econom
 
 ## See it
 
-The `web/` folder is a static, bilingual (EN / 中文) demo site with no build step and no external requests. It has:
+The `web/` folder is a static, bilingual (EN / 中文) demo site with no build step (its only external request is
+Google Fonts, with system fallbacks). It walks one auction end to end:
 
-- a sealed-envelope board: close the bidding and see what the contract reveals, and what it never opens;
-- a five-step walk through the lifecycle, with what is public and what stays sealed at each step;
+- a guided six-step replay of a real contract run on the local FHEVM mock (`web/transcript.js`, written by
+  `npm run demo`), split at every step into **on-chain, everyone sees** versus **sealed, never in the clear** —
+  including the actual ciphertext handles the run produced;
 - a playground: change the budget, true costs, handicaps and bidding strategies, and watch the award and the
   pay-off curve move. The curve is flat for the winner: shading your bid never helps, which is the point of the rule;
-- a replay of a real contract run on the local FHEVM mock (`web/transcript.js`, produced by `npm run demo`).
+- the who-sees-what table and the per-bid FHE fold, as code.
 
 The playground and the board run `web/mechanism.js`, a plaintext copy of the award rule. A differential test
 (`test/webRule.ts`, 5000 random auctions) checks it against the same plaintext reference that the Solidity contract
@@ -199,10 +201,10 @@ it exists so the privacy test can assert that the handle cannot be publicly decr
   confidential escrow directly. VeilTender runs its own lifecycle around an ERC-7984 escrow instead.
 - **No Chainlink integration.**
 
-## What is new in this repository
+## New in this hackathon
 
-This repository is new for the hackathon period (created 2026-10-11) and every file in it was written for it. It
-builds on the author's earlier, separate work, which is not part of this repository: the draft ERC for a sealed-bid
+Everything in this repository was developed inside the event window (the repository was created 2026-10-11; the
+commit history is the evidence). Prior, separate work it builds on, not included here: the draft ERC for a sealed-bid
 award mechanism ([thread](https://ethereum-magicians.org/t/sealed-bid-award-mechanism-for-task-tenders-companion-to-erc-8183-8195-8414/29814),
 [repo](https://github.com/shentonyan/sealed-bid-award-erc)), which specifies plaintext award rules. New here:
 
@@ -212,6 +214,11 @@ award mechanism ([thread](https://ethereum-magicians.org/t/sealed-bid-award-mech
 - confidential ERC-7984 escrow with encrypted funding verification;
 - delivery bond, evaluator and timeout settlement;
 - test suite, demo run and an interactive bilingual demo site.
+
+## Team
+
+Solo entry: [Shenton Yan](https://github.com/shentonyan) (mechanism design / operations management researcher),
+with AI-assisted development (see commit co-authorship).
 
 Project scaffolding (Hardhat configuration) is derived from `zama-ai/fhevm-hardhat-template` (BSD-3-Clause-Clear).
 

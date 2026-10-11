@@ -1,4 +1,4 @@
-/* VeilTender demo site behaviour. Plain script, no build step, no network requests. */
+/* VeilTender demo site behaviour. Plain script, no build step. */
 (function () {
   "use strict";
 
@@ -33,118 +33,43 @@
     return null;
   }
 
-  /* ---------------------------------------------------------------- watercolour canvas */
-  var PALETTE = [[75, 95, 168], [47, 135, 130], [196, 90, 118], [201, 143, 30], [110, 143, 78]];
-  function mulberry32(a) {
-    return function () {
-      a |= 0; a = (a + 0x6d2b79f5) | 0;
-      var x = Math.imul(a ^ (a >>> 15), 1 | a);
-      x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  function buildCanvas() {
-    var el = $("canvas");
-    if (!el) return;
-    var vw = window.innerWidth || 1200, vh = window.innerHeight || 800;
-    var cell = Math.max(110, Math.round(vw / 9));
-    var cols = Math.ceil((vw + 100) / cell), rows = Math.ceil((vh + 100) / cell);
-    el.style.gridTemplateColumns = "repeat(" + cols + "," + cell + "px)";
-    el.style.gridAutoRows = cell + "px";
-    el.textContent = "";
-    var rnd = mulberry32(20261012);
-    for (var i = 0; i < cols * rows; i++) {
-      var d = document.createElement("div");
-      d.className = "sq";
-      if (rnd() > 0.42) {
-        var c = PALETTE[Math.floor(rnd() * PALETTE.length)].join(",");
-        var a = 0.14 + rnd() * 0.26;
-        var x = 15 + rnd() * 70, y = 15 + rnd() * 70;
-        d.style.backgroundColor = "rgba(" + c + "," + (a * 0.28).toFixed(3) + ")";
-        d.style.backgroundImage = "radial-gradient(circle at " + x.toFixed(0) + "% " + y.toFixed(0) + "%, rgba(" + c + "," + a.toFixed(3) + ") 0%, rgba(" + c + "," + (a * 0.55).toFixed(3) + ") 45%, rgba(" + c + ",0) 76%)";
-        d.style.margin = (rnd() * 6).toFixed(1) + "px";
-      }
-      el.appendChild(d);
-    }
-  }
-  var resizeTimer = null;
-  window.addEventListener("resize", function () {
-    window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(buildCanvas, 200);
-  });
-  var HUES = ["0deg", "38deg", "-42deg", "75deg", "-70deg", "18deg"];
-  function watchTones() {
-    if (!("IntersectionObserver" in window)) return;
-    var wrap = $("canvas-wrap");
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) wrap.style.setProperty("--hue", HUES[Number(e.target.getAttribute("data-tone")) % HUES.length]);
+  /* ------------------------------------------------- real artifacts from the committed transcript */
+  var TRANSCRIPT = window.VEIL_TRANSCRIPT || null;
+  function transcriptHandles() {
+    var out = [];
+    if (!TRANSCRIPT || !TRANSCRIPT.steps) return out;
+    TRANSCRIPT.steps.forEach(function (s) {
+      (s["public"] || []).forEach(function (line) {
+        var m = /input handle (0x[0-9a-fA-F]+…?)/.exec(line);
+        if (m) out.push({ actor: s.actor, hex: m[1] });
       });
-    }, { rootMargin: "-45% 0px -45% 0px" });
-    Array.prototype.forEach.call(document.querySelectorAll("[data-tone]"), function (s) { io.observe(s); });
-  }
-
-  /* ---------------------------------------------------------------- hero board */
-  var HERO = {
-    budget: 1000,
-    agents: [
-      { name: "ReliableRoute", cost: 420, k: 0, c: "--indigo" },
-      { name: "FreshStart", cost: 300, k: 150, c: "--teal" },
-      { name: "SteadyHaul", cost: 510, k: 0, c: "--rose" },
-      { name: "OverReach", cost: 1500, k: 0, c: "--ochre" },
-    ],
-  };
-  var boardOpen = false;
-  var boardResult = null;
-
-  function buildBoard() {
-    var box = $("envs");
-    box.textContent = "";
-    HERO.agents.forEach(function (a, i) {
-      var env = h("div", { class: "env", id: "env-" + i, style: "--c: var(" + a.c + ")" },
-        h("span", { class: "env-name", text: a.name }),
-        h("div", { class: "veil", "data-i18n-live": "board.sealed" }),
-        h("span", { class: "env-win", "data-i18n-live": "board.winner" }));
-      box.appendChild(env);
     });
-    $("board-btn").addEventListener("click", toggleBoard);
+    return out;
   }
-  function toggleBoard() {
-    if (!boardOpen) {
-      boardResult = Rule.award(HERO.agents.map(function (a) { return a.cost; }), HERO.budget, HERO.agents.map(function (a) { return a.k; }));
-      boardOpen = true;
-      if (boardResult.winner !== null) $("env-" + boardResult.winner).classList.add("open");
-    } else {
-      boardOpen = false;
-      boardResult = null;
-      Array.prototype.forEach.call(document.querySelectorAll(".env"), function (e) { e.classList.remove("open"); });
-    }
-    renderBoardText();
-  }
-  function renderBoardText() {
-    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-live]"), function (n) {
-      n.textContent = t(n.getAttribute("data-i18n-live"));
-    });
-    var stamp = $("stamp"), res = $("board-result");
-    $("board-btn").textContent = t(boardOpen ? "board.reset" : "board.close");
-    $("board-hint").hidden = boardOpen;
-    if (boardOpen && boardResult) {
-      if (boardResult.winner !== null) {
-        stamp.hidden = boardResult.secondScore === null;
-        if (boardResult.secondScore !== null) stamp.textContent = t("board.stamp", { score: boardResult.secondScore });
-        res.textContent = t("board.result", { name: HERO.agents[boardResult.winner].name, price: boardResult.price });
-      }
-    } else {
-      stamp.hidden = true;
-      res.textContent = "";
-    }
+  var HANDLES = transcriptHandles();
+
+  /* ------------------------------------------------- hero: the dark "one bid" card */
+  function buildCipher() {
+    var dl = $("cipher-rows");
+    dl.textContent = "";
+    var first = HANDLES[0] || { actor: "ReliableRoute", hex: "0x9451dc58…" };
+    var addr = "0x7099…79C8";
+    if (TRANSCRIPT && TRANSCRIPT.agents && TRANSCRIPT.agents[0]) addr = TRANSCRIPT.agents[0].address;
+    dl.appendChild(h("dt", { text: t("cipher.event") }));
+    dl.appendChild(h("dd", { text: t("cipher.event.v", { addr: addr }) }));
+    dl.appendChild(h("dt", { text: t("cipher.handle") }));
+    dl.appendChild(h("dd", { class: "hex", text: first.hex }));
+    dl.appendChild(h("dt", { text: t("cipher.bond") }));
+    dl.appendChild(h("dd", { text: t("cipher.bond.v") }));
+    dl.appendChild(h("dt", { text: t("cipher.price") }));
+    dl.appendChild(h("dd", { class: "never", text: t("cipher.price.v") }));
   }
 
-  /* ---------------------------------------------------------------- flow */
-  var STEP_KEYS = ["s1", "s2", "s3", "s4", "s5"];
-  var activeStep = 1;
+  /* ------------------------------------------------- the stepped demo */
+  var STEPS = ["s1", "s2", "s3", "s4", "s5", "s6"];
+  var demoStep = 0;
+  var playTimer = null;
   var CODE = [
-    "// simplified from VeilTender._fold",
     "ebool valid   = FHE.le(x, budget);",
     "euint64 score = FHE.select(valid, FHE.add(x, handicap), SCORE_SENT);",
     "ebool beatsBest   = FHE.lt(score, best);",
@@ -154,30 +79,74 @@
     "index  = FHE.select(beatsBest, i, index);",
   ].join("\n");
 
-  function renderSteps() {
-    var list = $("steps");
-    list.textContent = "";
-    STEP_KEYS.forEach(function (k, i) {
-      var b = h("button", { type: "button" }, h("span", { class: "n", text: String(i + 1) }), h("span", { text: t("flow." + k + ".t") }));
-      if (i === activeStep) b.setAttribute("aria-current", "step");
-      b.addEventListener("click", function () { activeStep = i; renderSteps(); });
-      list.appendChild(h("li", null, b));
+  function renderDemo() {
+    var rail = $("demo-rail");
+    rail.textContent = "";
+    STEPS.forEach(function (k, i) {
+      var b = h("button", { type: "button", class: i < demoStep ? "done" : "" },
+        h("span", { class: "n", text: String(i + 1) }),
+        h("span", { text: t("demo." + k + ".t") }));
+      if (i === demoStep) b.setAttribute("aria-current", "step");
+      b.addEventListener("click", function () { stopPlay(); demoStep = i; renderDemo(); });
+      rail.appendChild(h("li", null, b));
     });
-    var k = STEP_KEYS[activeStep];
-    var panel = $("step-panel");
-    panel.textContent = "";
-    panel.appendChild(h("h3", { class: "step-h", text: t("flow." + k + ".t") }));
-    panel.appendChild(h("div", { class: "lane lane-pub" }, h("h3", { text: t("flow.public") }), h("p", { text: t("flow." + k + ".pub") })));
-    panel.appendChild(h("div", { class: "lane lane-sealed" }, h("h3", { text: t("flow.sealed") }), h("p", { text: t("flow." + k + ".sealed") })));
-    if (k === "s2") panel.appendChild(h("pre", { class: "code", text: CODE }));
+
+    var k = STEPS[demoStep];
+    var pub = $("stage-pub");
+    pub.textContent = "";
+    t("demo." + k + ".pub").forEach(function (line) { pub.appendChild(h("li", { text: line })); });
+    if (k === "s2") {
+      (HANDLES.length ? HANDLES : []).forEach(function (hd) {
+        pub.appendChild(h("li", { class: "hexline", text: hd.actor + "  " + hd.hex }));
+      });
+    }
+    var sealed = $("stage-sealed");
+    sealed.textContent = "";
+    t("demo." + k + ".sealed").forEach(function (line) { sealed.appendChild(h("li", { text: line })); });
+
+    var code = $("stage-code");
+    code.hidden = k !== "s3";
+    if (k === "s3") code.textContent = CODE;
+
+    var result = $("demo-result");
+    result.hidden = demoStep !== STEPS.length - 1;
+    if (!result.hidden) result.textContent = t("demo.result");
+
+    $("demo-prev").textContent = t("demo.prev");
+    $("demo-prev").disabled = demoStep === 0;
+    var last = demoStep === STEPS.length - 1;
+    $("demo-next").textContent = t(last ? "demo.restart" : "demo.next");
+    $("demo-play").textContent = t(playTimer ? "demo.pause" : "demo.play");
+  }
+  function stepNext() {
+    demoStep = demoStep === STEPS.length - 1 ? 0 : demoStep + 1;
+    renderDemo();
+  }
+  function stopPlay() {
+    if (playTimer) { window.clearInterval(playTimer); playTimer = null; }
+  }
+  function togglePlay() {
+    if (playTimer) { stopPlay(); renderDemo(); return; }
+    if (demoStep === STEPS.length - 1) demoStep = 0;
+    playTimer = window.setInterval(function () {
+      if (demoStep === STEPS.length - 1) { stopPlay(); renderDemo(); return; }
+      demoStep += 1;
+      renderDemo();
+    }, 2600);
+    renderDemo();
   }
 
-  /* ---------------------------------------------------------------- playground */
+  /* ------------------------------------------------- playground */
   var MULT = { truth: 1, high: 1.25, low: 0.75 };
   var tryState = {
     budget: 1000,
     chartAgent: 0,
-    agents: HERO.agents.map(function (a) { return { name: a.name, cost: a.cost, k: a.k, strategy: "truth" }; }),
+    agents: [
+      { name: "ReliableRoute", cost: 420, k: 0, strategy: "truth" },
+      { name: "FreshStart", cost: 300, k: 150, strategy: "truth" },
+      { name: "SteadyHaul", cost: 510, k: 0, strategy: "truth" },
+      { name: "OverReach", cost: 1500, k: 0, strategy: "truth" },
+    ],
   };
   var handleFor = [];
   var handleBid = [];
@@ -258,7 +227,7 @@
       var bid = bidOf(a);
       if (handleBid[i] !== bid || !handleFor[i]) { handleBid[i] = bid; handleFor[i] = "0x" + randomHex(32); }
       var hex = handleFor[i];
-      list.appendChild(h("li", { text: "bid #" + i + " from " + a.name + "  " + hex.slice(0, 14) + "…" + hex.slice(-4) }));
+      list.appendChild(h("li", { text: "bid #" + i + " " + a.name + "  " + hex.slice(0, 14) + "…" + hex.slice(-4) }));
     });
 
     var rev = $("revealed");
@@ -329,26 +298,20 @@
       : t("chart.caption.lose", { name: a.name });
   }
 
-  /* ---------------------------------------------------------------- replay of the real contract run */
-  function renderReplay() {
-    var box = $("timeline");
-    box.textContent = "";
-    var T = window.VEIL_TRANSCRIPT;
-    if (!T) { box.appendChild(h("li", { text: t("run.missing") })); return; }
-    T.steps.forEach(function (s) {
-      var li = h("li", null,
-        h("div", { class: "step-title" }, s.title, h("span", { class: "actor", text: s.actor })),
-        h("div", { class: "lane lane-pub" }, h("h3", { text: t("run.pub") }),
-          h("ul", null, s["public"].map(function (x) { return h("li", { text: x }); }))));
-      if (s["private"]) {
-        li.appendChild(h("div", { class: "lane lane-sealed" }, h("h3", { text: t("run.priv", { actor: s.actor }) }),
-          h("ul", null, s["private"].map(function (x) { return h("li", { text: x }); }))));
-      }
-      box.appendChild(li);
-    });
+  /* ------------------------------------------------- privacy lists, limits, code */
+  function fillList(id, key) {
+    var ul = $(id);
+    ul.textContent = "";
+    t(key).forEach(function (line) { ul.appendChild(h("li", { text: line })); });
+  }
+  function renderStatic() {
+    fillList("privacy-pub", "privacy.pub.l");
+    fillList("privacy-sealed", "privacy.sealed.l");
+    fillList("limits-list", "limits.l");
+    $("fold-code").textContent = CODE;
   }
 
-  /* ---------------------------------------------------------------- language */
+  /* ------------------------------------------------- language */
   function applyLang(next) {
     lang = next;
     document.documentElement.lang = next === "zh" ? "zh-CN" : "en";
@@ -359,18 +322,18 @@
     Array.prototype.forEach.call(document.querySelectorAll(".lang button"), function (b) {
       b.setAttribute("aria-pressed", b.getAttribute("data-lang") === next ? "true" : "false");
     });
-    renderBoardText();
-    renderSteps();
+    buildCipher();
+    renderDemo();
+    renderStatic();
     buildTryRows();
     updateTry();
-    renderReplay();
     store("veil-lang", next);
   }
 
   function init() {
-    buildCanvas();
-    watchTones();
-    buildBoard();
+    $("demo-prev").addEventListener("click", function () { stopPlay(); if (demoStep > 0) demoStep -= 1; renderDemo(); });
+    $("demo-next").addEventListener("click", function () { stopPlay(); stepNext(); });
+    $("demo-play").addEventListener("click", togglePlay);
     $("budget").addEventListener("input", function (e) {
       var n = num(e.target.value, 1000);
       tryState.budget = n < 1 ? 1 : n;
@@ -379,9 +342,6 @@
     $("chart-agent").addEventListener("change", function (e) {
       tryState.chartAgent = Number(e.target.value);
       drawChart();
-    });
-    $("priv").addEventListener("change", function (e) {
-      $("run").classList.toggle("show-private", e.target.checked);
     });
     Array.prototype.forEach.call(document.querySelectorAll(".lang button"), function (b) {
       b.addEventListener("click", function () { applyLang(b.getAttribute("data-lang")); });
