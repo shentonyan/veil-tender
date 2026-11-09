@@ -139,6 +139,7 @@
 
   /* ------------------------------------------------- playground */
   var MULT = { truth: 1, high: 1.25, low: 0.75 };
+  var MAX_AMOUNT = Math.pow(2, 40) - 1; // VeilTender.MAX_BUDGET also bounds handicaps.
   var tryState = {
     budget: 1000,
     chartAgent: 0,
@@ -162,8 +163,12 @@
     }
     return out;
   }
-  function num(v, fallback) {
-    var n = Math.floor(Number(v));
+  function num(input, fallback) {
+    var n = Math.floor(Number(input.value));
+    if (n > MAX_AMOUNT) {
+      input.value = String(MAX_AMOUNT);
+      return MAX_AMOUNT;
+    }
     return isFinite(n) && n >= 0 ? n : fallback;
   }
   function bidOf(a) { return Math.round(a.cost * MULT[a.strategy]); }
@@ -176,16 +181,16 @@
     var body = $("agent-rows");
     body.textContent = "";
     tryState.agents.forEach(function (a, i) {
-      var cost = h("input", { type: "number", min: "0", step: "1", value: String(a.cost), "aria-label": a.name + " " + t("try.cost") });
-      var k = h("input", { type: "number", min: "0", step: "1", value: String(a.k), "aria-label": a.name + " " + t("try.handicap") });
+      var cost = h("input", { type: "number", min: "0", max: MAX_AMOUNT, step: "1", value: String(a.cost), "aria-label": a.name + " " + t("try.cost") });
+      var k = h("input", { type: "number", min: "0", max: MAX_AMOUNT, step: "1", value: String(a.k), "aria-label": a.name + " " + t("try.handicap") });
       var sel = h("select", { "aria-label": a.name + " " + t("try.strategy") });
       [["truth", "try.s.truth"], ["high", "try.s.high"], ["low", "try.s.low"]].forEach(function (o) {
         var opt = h("option", { value: o[0], text: t(o[1]) });
         if (a.strategy === o[0]) opt.selected = true;
         sel.appendChild(opt);
       });
-      cost.addEventListener("input", function () { a.cost = num(cost.value, 0); updateTry(); });
-      k.addEventListener("input", function () { a.k = num(k.value, 0); updateTry(); });
+      cost.addEventListener("input", function () { a.cost = num(cost, 0); updateTry(); });
+      k.addEventListener("input", function () { a.k = num(k, 0); updateTry(); });
       sel.addEventListener("change", function () { a.strategy = sel.value; updateTry(); });
       body.appendChild(h("tr", null,
         h("td", { class: "name", text: a.name }),
@@ -245,17 +250,19 @@
     var a = tryState.agents[i];
     var budget = tryState.budget;
     var maxX = Math.max(10, Math.ceil(budget * 1.2));
-    var step = Math.max(1, Math.round(maxX / 320));
-    var pts = [], winMax = -1, payoffWin = null;
-    for (var x = 0; x <= maxX; x += step) {
-      var r = runTry(i, x);
-      var win = r.winner === i;
-      var u = win ? r.price - a.cost : 0;
-      if (win) { winMax = x; payoffWin = u; }
-      pts.push([x, u]);
+    var atZero = runTry(i, 0);
+    var canWin = atZero.winner === i;
+    var payoffWin = canWin ? atZero.price - a.cost : 0;
+    var winMax = 0;
+    var pts = [[0, 0], [maxX, 0]];
+    if (canWin) {
+      // The clearing price is the threshold. Check whether this bidder wins a tie there.
+      var threshold = atZero.price;
+      winMax = runTry(i, threshold).winner === i ? threshold : threshold - 1;
+      var firstLosingBid = winMax + 1;
+      pts = [[0, payoffWin], [firstLosingBid, payoffWin], [firstLosingBid, 0], [maxX, 0]];
     }
-    var minU = 0, maxU = 0;
-    pts.forEach(function (p) { if (p[1] < minU) minU = p[1]; if (p[1] > maxU) maxU = p[1]; });
+    var minU = Math.min(0, payoffWin), maxU = Math.max(0, payoffWin);
     if (maxU === minU) { maxU = minU + 1; }
     var pad = (maxU - minU) * 0.12;
     var yLo = minU - pad, yHi = maxU + pad;
@@ -294,7 +301,7 @@
     svg.appendChild(s("text", { x: 12, y: T + 4, "text-anchor": "start" }, t("chart.y")));
 
     $("chart-title").textContent = t("chart.title", { name: a.name });
-    $("chart-caption").textContent = payoffWin !== null && payoffWin > 0
+    $("chart-caption").textContent = canWin
       ? t("chart.caption.win", { name: a.name, payoff: payoffWin, limit: winMax })
       : t("chart.caption.lose", { name: a.name });
   }
@@ -335,8 +342,9 @@
     $("demo-prev").addEventListener("click", function () { stopPlay(); if (demoStep > 0) demoStep -= 1; renderDemo(); });
     $("demo-next").addEventListener("click", function () { stopPlay(); stepNext(); });
     $("demo-play").addEventListener("click", togglePlay);
+    $("budget").setAttribute("max", MAX_AMOUNT);
     $("budget").addEventListener("input", function (e) {
-      var n = num(e.target.value, 1000);
+      var n = num(e.target, 1000);
       tryState.budget = n < 1 ? 1 : n;
       updateTry();
     });

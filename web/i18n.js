@@ -152,7 +152,7 @@
       "chart.caption.win":
         "While {name} wins, its pay-off is flat at {payoff}, because the price does not depend on its own bid. Above {limit} it loses. With rivals' bids fixed, no bid does better than bidding the true cost.",
       "chart.caption.lose":
-        "With these rivals {name} cannot win at a profit: no bid at or above its cost wins. Bidding the true cost is still never worse than any other bid.",
+        "With these rivals {name} cannot win even at a bid of zero.",
 
       "privacy.title": "Why sealed — and who sees what",
       "privacy.why.1.h": "Open bids invite undercutting.",
@@ -334,7 +334,7 @@
       "chart.caption.win":
         "只要 {name} 能中标,它的收益就固定在 {payoff},因为价格不取决于它自己的报价。报价高于 {limit} 就会落选。在其他人报价不变时,没有哪个报价比按真实成本报价更好。",
       "chart.caption.lose":
-        "面对这些对手,{name} 无法盈利中标:任何不低于成本的报价都不会中标。按真实成本报价仍然不会比其他报价更差。",
+        "面对这些对手，{name} 即使报价为 0 也无法中标。",
 
       "privacy.title": "为什么密封——以及谁能看到什么",
       "privacy.why.1.h": "公开报价招来压价。",
